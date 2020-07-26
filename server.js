@@ -7,11 +7,14 @@ const db = require("./db/db.json");
 // set up express app
 
 const app = express(); 
-const PORT = process.env.PORT || 7070;
+const PORT = process.env.PORT || 7000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
 
+let noteDB = JSON.parse(fs.readFileSync(path.join(__dirname, "./db/db.json"), (err,data) => {
+    if(err) throw err;
+}));
 
 
 
@@ -26,13 +29,17 @@ app.get("/notes",(req, res) => {
 });
 
 app.get("/api/notes", (req, res) =>{
-    res.json(db);
+    res.json(noteDB);
 });
 
+
+
+
+// posting new notes into the server
 app.post("/api/notes", (req, res) => {
     const newNote = req.body;
-    db.push(newNote);
-    newNote.id = parseInt(db.length)+1;
+    noteDB.push(newNote);
+    newNote.id = parseInt(noteDB.length)+1;
     fs.readFile("./db/db.json","utf-8",(err, data) => {
         let addedNotes =JSON.parse(data);
         addedNotes.push(newNote);
@@ -44,8 +51,19 @@ app.post("/api/notes", (req, res) => {
   });
 });
 
+//deleting notes from the server 
 
-
+app.delete ("/api/notes/:id", (req, res) => {
+    const deleteNote = req.params.id
+    noteDB = noteDB.filter((note)=> {
+        note.id != req.params.id
+    });
+    fs.writeFile("./db/db.json", JSON.stringify(noteDB),(err) => 
+    {
+        if(err) throw err
+       res.json(noteDB)
+    });
+});
 
 
 
